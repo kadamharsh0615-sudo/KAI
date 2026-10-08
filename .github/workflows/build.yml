@@ -1,1 +1,24 @@
-
+name: Build Kai
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: 17}
+      - uses: gradle/actions/setup-gradle@v3
+        with: {gradle-version: "8.5"}
+      - run: unzip -q kai-project.zip
+      - run: |
+          cd kai
+          mkdir -p app/src/main/assets
+          curl -sL -o m.zip https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+          unzip -q m.zip
+          mv vosk-model-small-en-us-0.15 app/src/main/assets/model
+          uuidgen > app/src/main/assets/model/uuid
+          gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kai-apk
+          path: kai/app/build/outputs/apk/debug/app-debug.apk
